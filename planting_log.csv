@@ -9,6 +9,8 @@ bed_id,crop,planted_date,expected_days_to_mature,notes
 6,Tomatoes,2025-04-15,80,
 7,Basil,2025-04-15,80,
 8, Wildflowers,2025-04-15,0,
+G1,Potatoes,2025-04-15,80,
+G2,Watermelon,2025-04-15,80,
 T1, Pear,2025-03-15,150,
 T2, Pear,2025-03-15,150,
 T3, Apple,2025-03-15,150,
