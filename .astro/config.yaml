@@ -1,0 +1,7 @@
+project:
+  name: kansas-microfarm-climate-tracker
+
+services:
+  postgres:
+    ports:
+      - "5433:5432"
