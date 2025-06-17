@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 Overview
 ========
 
@@ -43,3 +44,15 @@ Contact
 =======
 
 The Astronomer CLI is maintained with love by the Astronomer team. To report a bug or suggest a change, reach out to our support.
+=======
+# Kansas Micro-Farm Climate Tracker
+
+This project analyzes local climate, weather, and planting data to support small-scale orchard and garden planning in Kansas.
+
+## Structure
+- `data/`: raw CSVs for planting, weather, emissions
+- `etl/`: ETL Python scripts
+- `notebooks/`: Jupyter for exploration
+- `sql/`: SQL table and queries
+- `dashboard/`: Power BI or visualization notes
+>>>>>>> f84a05954bb8efed6f65ce100a32c78ef301731b

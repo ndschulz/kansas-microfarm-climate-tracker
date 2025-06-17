@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import os
 import requests
 import pandas as pd
@@ -104,3 +105,6 @@ with engine.begin() as conn:
         conn.execute(stmt)
 
 print("Weather data loaded successfully.")
+=======
+# Placeholder for weather ETL script
+>>>>>>> f84a05954bb8efed6f65ce100a32c78ef301731b

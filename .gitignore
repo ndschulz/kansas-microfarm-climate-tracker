@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 .git
 .env
 .DS_Store
@@ -9,3 +10,6 @@ airflow-webserver.pid
 webserver_config.py
 airflow.cfg
 airflow.db
+=======
+.env
+>>>>>>> f84a05954bb8efed6f65ce100a32c78ef301731b
