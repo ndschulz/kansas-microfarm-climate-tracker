@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, MetaData, Table
 from sqlalchemy.dialects.postgresql import insert
 from dotenv import load_dotenv
 import logging
@@ -28,12 +28,17 @@ try:
     )
 
     logging.info("Reading emissions CSV...")
-    df = pd.read_csv("emission_log.csv")
+    df = pd.read_csv("emissions_log.csv")
+
+    # Reflect emissions table from database
+    metadata = MetaData()
+    metadata.reflect(bind=engine)
+    emissions_table = metadata.tables["emissions"]
 
     logging.info("Loading data to emissions table...")
     with engine.begin() as conn:
         for _, row in df.iterrows():
-            stmt = insert(text("emissions")).values(**row.to_dict())
+            stmt = insert(emissions_table).values(**row.to_dict())
             stmt = stmt.on_conflict_do_nothing(index_elements=["date", "source"])
             conn.execute(stmt)
 
