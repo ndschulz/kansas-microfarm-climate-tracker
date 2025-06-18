@@ -1,11 +1,8 @@
-
 import os
 import requests
 import pandas as pd
-from sqlalchemy import create_engine, text
-from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy import create_engine
 from dotenv import load_dotenv
-from datetime import datetime
 
 # Load environment variables from .env file
 load_dotenv()
@@ -23,18 +20,12 @@ engine = create_engine(
     f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
 )
 
-# Define historical date range
-start_date = "2025-03-01"
-end_date = datetime.today().strftime("%Y-%m-%d")
-
 # Open-Meteo API URL
-url = "https://archive-api.open-meteo.com/v1/archive"
+url = "https://api.open-meteo.com/v1/forecast"
 
 params = {
     "latitude": latitude,
     "longitude": longitude,
-    "start_date": start_date,
-    "end_date": end_date,
     "daily": [
         "temperature_2m_max",
         "temperature_2m_min",
@@ -50,11 +41,8 @@ params = {
 
 response = requests.get(url, params=params)
 print("Status Code:", response.status_code)
-print("Response JSON:", response.json())
-
 
 data = response.json()
-
 daily = data["daily"]
 
 # Weather code descriptions
@@ -101,13 +89,8 @@ df = pd.DataFrame({
 # Map weather code to description
 df["weather_description"] = df["weather_code"].map(weathercode_lookup)
 
-# Load to Postgres (skip duplicates)
-# Load to Postgres (skip duplicates by date)
+# Load to Postgres
 with engine.begin() as conn:
     df.to_sql("weather", con=conn, index=False, if_exists="append", method="multi")
 
-
 print("Weather data loaded successfully.")
-
-# Placeholder for weather ETL script
-
