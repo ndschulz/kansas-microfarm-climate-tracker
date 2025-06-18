@@ -23,7 +23,7 @@ try:
     )
 
     logging.info("Reading planting CSV...")
-    df = pd.read_csv("plantings_log.csv")
+    df = pd.read_csv(os.path.join(os.path.dirname(__file__), "planting_log.csv"))
 
     logging.info("Loading to plantings table...")
     df.to_sql("plantings", con=engine, if_exists="append", index=False)
