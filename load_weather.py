@@ -102,13 +102,10 @@ df = pd.DataFrame({
 df["weather_description"] = df["weather_code"].map(weathercode_lookup)
 
 # Load to Postgres (skip duplicates)
+# Load to Postgres (skip duplicates by date)
 with engine.begin() as conn:
-    for _, row in df.iterrows():
-        stmt = insert(text("weather")).values(**row.to_dict())
-                # On conflict with 'date', do nothing (skip duplicates)
+    df.to_sql("weather", con=conn, index=False, if_exists="append", method="multi")
 
-        stmt = stmt.on_conflict_do_nothing(index_elements=["date"])
-        conn.execute(stmt)
 
 print("Weather data loaded successfully.")
 
