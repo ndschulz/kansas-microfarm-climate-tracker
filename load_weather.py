@@ -79,8 +79,9 @@ df = pd.DataFrame({
 # Map weather codes to descriptions
 df["weather_description"] = df["weather_code"].map(weather_descriptions)
 
-# Drop any rows with missing date (incomplete API response)
-df = df[df["date"].notna()]
+# Drop any rows with missing data
+df = df.dropna()
+
 
 # Convert date column
 df["date"] = pd.to_datetime(df["date"]).dt.date
