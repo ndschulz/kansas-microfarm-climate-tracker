@@ -1,48 +1,28 @@
 import os
 import requests
 import pandas as pd
-from sqlalchemy import create_engine, MetaData, Table, Column, Date, Float, Integer, String
+from sqlalchemy import create_engine, MetaData, Table
 from sqlalchemy.dialects.postgresql import insert
 from datetime import datetime, timedelta
 
 # Weathercode to description mapping
 weather_descriptions = {
-    0: "Clear sky",
-    1: "Mainly clear",
-    2: "Partly cloudy",
-    3: "Overcast",
-    45: "Fog",
-    48: "Depositing rime fog",
-    51: "Light drizzle",
-    53: "Moderate drizzle",
-    55: "Dense drizzle",
-    56: "Light freezing drizzle",
-    57: "Dense freezing drizzle",
-    61: "Slight rain",
-    63: "Moderate rain",
-    65: "Heavy rain",
-    66: "Light freezing rain",
-    67: "Heavy freezing rain",
-    71: "Slight snow fall",
-    73: "Moderate snow fall",
-    75: "Heavy snow fall",
-    77: "Snow grains",
-    80: "Slight rain showers",
-    81: "Moderate rain showers",
-    82: "Violent rain showers",
-    85: "Slight snow showers",
-    86: "Heavy snow showers",
-    95: "Thunderstorm",
-    96: "Thunderstorm with slight hail",
+    0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
+    45: "Fog", 48: "Depositing rime fog", 51: "Light drizzle", 53: "Moderate drizzle",
+    55: "Dense drizzle", 56: "Light freezing drizzle", 57: "Dense freezing drizzle",
+    61: "Slight rain", 63: "Moderate rain", 65: "Heavy rain", 66: "Light freezing rain",
+    67: "Heavy freezing rain", 71: "Slight snow fall", 73: "Moderate snow fall",
+    75: "Heavy snow fall", 77: "Snow grains", 80: "Slight rain showers",
+    81: "Moderate rain showers", 82: "Violent rain showers", 85: "Slight snow showers",
+    86: "Heavy snow showers", 95: "Thunderstorm", 96: "Thunderstorm with slight hail",
     99: "Thunderstorm with heavy hail"
 }
 
-# Set date range (backfill mode)
+# Set date range (backfill + forecast)
 end_date = datetime.now().date() + timedelta(days=7)
 start_date = datetime(2025, 3, 1).date()
 
-# Open-Meteo API
-url = "https://api.open-meteo.com/v1/forecast"
+# Open-Meteo API parameters
 params = {
     "latitude": 38.9807,
     "longitude": -94.8082,
@@ -61,7 +41,7 @@ params = {
     "end_date": end_date.isoformat()
 }
 
-response = requests.get(url, params=params)
+response = requests.get("https://api.open-meteo.com/v1/forecast", params=params)
 print("Status Code:", response.status_code)
 data = response.json()
 
@@ -76,17 +56,12 @@ df = pd.DataFrame({
     "weather_code": data["daily"]["weathercode"]
 })
 
-# Map weather codes to descriptions
+# Add weather descriptions
 df["weather_description"] = df["weather_code"].map(weather_descriptions)
-
-# Drop any rows with missing data
 df = df.dropna()
-
-
-# Convert date column
 df["date"] = pd.to_datetime(df["date"]).dt.date
 
-# Set up SQLAlchemy connection
+# Database connection
 db_user = os.getenv("DB_USER", "postgres")
 db_password = os.getenv("DB_PASSWORD", "Nicksucks1")
 db_host = os.getenv("DB_HOST", "host.docker.internal")
@@ -95,22 +70,15 @@ db_name = os.getenv("DB_NAME", "microfarm")
 
 engine = create_engine(f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}")
 
-# Define table schema
+# Reflect existing table instead of redefining
 metadata = MetaData()
-weather_table = Table(
-    "weather", metadata,
-    Column("date", Date, primary_key=True),
-    Column("temp_max", Float),
-    Column("temp_min", Float),
-    Column("feels_like_max", Float),
-    Column("feels_like_min", Float),
-    Column("precipitation_in", Float),
-    Column("weather_code", Integer),
-    Column("weather_description", String)
-)
+metadata.reflect(bind=engine)
+weather_table = metadata.tables["weather"]
 
-# Insert row-by-row with conflict handling
+# Insert with conflict handling
 with engine.begin() as conn:
     for _, row in df.iterrows():
         stmt = insert(weather_table).values(**row.to_dict()).on_conflict_do_nothing(index_elements=["date"])
         conn.execute(stmt)
+
+print("✅ Weather data loaded successfully.")
