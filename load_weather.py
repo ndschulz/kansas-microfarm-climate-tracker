@@ -1,10 +1,11 @@
-<<<<<<< HEAD
+
 import os
 import requests
 import pandas as pd
 from sqlalchemy import create_engine, text
 from sqlalchemy.dialects.postgresql import insert
 from dotenv import load_dotenv
+from datetime import datetime
 
 # Load environment variables from .env file
 load_dotenv()
@@ -22,13 +23,18 @@ engine = create_engine(
     f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
 )
 
+# Define historical date range
+start_date = "2025-03-01"
+end_date = datetime.today().strftime("%Y-%m-%d")
 
 # Open-Meteo API URL
-url = "https://api.open-meteo.com/v1/forecast"
+url = "https://archive-api.open-meteo.com/v1/archive"
 
 params = {
     "latitude": latitude,
     "longitude": longitude,
+    "start_date": start_date,
+    "end_date": end_date,
     "daily": [
         "temperature_2m_max",
         "temperature_2m_min",
@@ -45,6 +51,7 @@ params = {
 response = requests.get(url, params=params)
 print("Status Code:", response.status_code)
 print("Response JSON:", response.json())
+
 
 data = response.json()
 
@@ -94,17 +101,16 @@ df = pd.DataFrame({
 # Map weather code to description
 df["weather_description"] = df["weather_code"].map(weathercode_lookup)
 
-# Load to Postgres
-
-
+# Load to Postgres (skip duplicates)
 with engine.begin() as conn:
     for _, row in df.iterrows():
         stmt = insert(text("weather")).values(**row.to_dict())
-        # On conflict with 'date', do nothing (skip duplicates)
+                # On conflict with 'date', do nothing (skip duplicates)
+
         stmt = stmt.on_conflict_do_nothing(index_elements=["date"])
         conn.execute(stmt)
 
 print("Weather data loaded successfully.")
-=======
+
 # Placeholder for weather ETL script
->>>>>>> f84a05954bb8efed6f65ce100a32c78ef301731b
+
