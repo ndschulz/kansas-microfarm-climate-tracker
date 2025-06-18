@@ -1,9 +1,6 @@
-<<<<<<< HEAD
-# Astro Runtime includes the following pre-installed providers packages: https://www.astronomer.io/docs/astro/runtime-image-architecture#provider-packages
-=======
 pandas
 sqlalchemy
 psycopg2-binary
 openpyxl
 jupyter
->>>>>>> f84a05954bb8efed6f65ce100a32c78ef301731b
+python-dotenv
