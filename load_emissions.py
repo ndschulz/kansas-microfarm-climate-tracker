@@ -39,7 +39,7 @@ try:
     with engine.begin() as conn:
         for _, row in df.iterrows():
             stmt = insert(emissions_table).values(**row.to_dict())
-            stmt = stmt.on_conflict_do_nothing(index_elements=["date", "source"])
+            stmt = stmt.on_conflict_do_nothing(index_elements=["year", "county", "sector"])
             conn.execute(stmt)
 
     logging.info("Emissions data loaded successfully.")

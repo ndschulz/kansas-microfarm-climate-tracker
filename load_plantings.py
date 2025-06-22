@@ -1,17 +1,23 @@
 import os
+import sys
 import pandas as pd
+import logging
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
-import logging
-import sys
 
 # Setup logging
-logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+logging.basicConfig(
+    stream=sys.stdout,
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 # Load environment variables
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
 
 try:
+    logging.info("Starting planting ETL process...")
+
     db_user = os.getenv("DB_USER")
     db_password = os.getenv("DB_PASSWORD")
     db_host = os.getenv("DB_HOST")
@@ -25,11 +31,4 @@ try:
     logging.info("Reading planting CSV...")
     df = pd.read_csv("planting_log.csv")
 
-    logging.info("Loading to plantings table...")
-    df.to_sql("plantings", con=engine, if_exists="append", index=False)
-
-    logging.info("Planting data loaded successfully.")
-
-except Exception as e:
-    logging.error(f"Failed to load planting data: {str(e)}")
-    sys.exit(1)
+    logging.info("Loading to 'plantings' table...")
