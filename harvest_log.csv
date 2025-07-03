@@ -1,2 +1,5 @@
-bed_id,crop,harvest_date,harvest_lbs,harvest_unit,notes
-1,Tomatoes,2025-07-12,1.5,lbs,test
+id,bed_id,crop,harvest_date,harvest_wt,harvest_unit,notes
+1,7,Carrots,2025-06-22,10.3,oz,"2 purple carrots"
+2,7,Carrots,2025-06-29,43.6,oz,"5 purple, 1 yellow, 1 orange"
+3,7,Onion,2025-06-29,1.2,oz,
+4,7,Carrots,2025-07-02,8.8,oz,
