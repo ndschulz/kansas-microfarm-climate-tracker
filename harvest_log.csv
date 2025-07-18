@@ -1,5 +1,13 @@
-id,bed_id,crop,harvest_date,harvest_wt,harvest_unit,notes
-1,7,Carrots,2025-06-22,10.3,oz,"2 purple carrots"
-2,7,Carrots,2025-06-29,43.6,oz,"5 purple, 1 yellow, 1 orange"
-3,7,Onion,2025-06-29,1.2,oz,
-4,7,Carrots,2025-07-02,8.8,oz,
+id,bed_id,crop,harvest_date,harvest_wt_oz, harvest_wt_lb,,notes
+1,7,Carrots,2025-06-22,10.3,,"2 purple carrots"
+2,7,Carrots,2025-06-29,43.6,,"5 purple, 1 yellow, 1 orange"
+3,7,Onion,2025-06-29,1.2,,
+4,7,Carrots,2025-07-02,8.8,,
+5,G1,Potatoes,2025-07-10,24.2,,
+6,4,Potatoes,2025-07-13,92.5,,
+7,G1,Potatoes,2025-07-13,42,,
+8,7,Carrots,2025-07-13,41.5,,
+9,7,Onion,2025-07-13,9.2,,
+10,7,Onions,2025-07-15,9.9,,
+11,1,Green Bell Peppers,2025-07-17,7.1,,
+12,3,Green Bell Peppers,2025-07-17,7.1,,
