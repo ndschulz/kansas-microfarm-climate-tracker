@@ -3,11 +3,15 @@ import sys
 import requests
 import pandas as pd
 import logging
-from sqlalchemy import create_engine, MetaData, Table
-from sqlalchemy.dialects.postgresql import insert
 from datetime import datetime, timedelta
+from sqlalchemy import create_engine, MetaData
+from sqlalchemy.dialects.postgresql import insert
+from dotenv import load_dotenv
 
-# Set up logging
+# Load environment variables
+load_dotenv()
+
+# Setup logging
 logging.basicConfig(
     stream=sys.stdout,
     level=logging.INFO,
@@ -15,65 +19,47 @@ logging.basicConfig(
 )
 
 try:
-    logging.info("Starting weather ETL process...")
+    logging.info("Starting WeatherAPI ETL...")
 
-    # Weathercode to description mapping
-    weather_descriptions = {
-        0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
-        45: "Fog", 48: "Depositing rime fog", 51: "Light drizzle", 53: "Moderate drizzle",
-        55: "Dense drizzle", 56: "Light freezing drizzle", 57: "Dense freezing drizzle",
-        61: "Slight rain", 63: "Moderate rain", 65: "Heavy rain", 66: "Light freezing rain",
-        67: "Heavy freezing rain", 71: "Slight snow fall", 73: "Moderate snow fall",
-        75: "Heavy snow fall", 77: "Snow grains", 80: "Slight rain showers",
-        81: "Moderate rain showers", 82: "Violent rain showers", 85: "Slight snow showers",
-        86: "Heavy snow showers", 95: "Thunderstorm", 96: "Thunderstorm with slight hail",
-        99: "Thunderstorm with heavy hail"
-    }
-
-    # Set date range (backfill + forecast)
-    end_date = datetime.now().date() + timedelta(days=7)
+    # Config
+    api_key = os.getenv("WEATHERAPI_KEY")
+    location = "Lenexa,KS"
     start_date = datetime(2025, 3, 1).date()
+    end_date = datetime.now().date()
 
-    # Open-Meteo API parameters
-    params = {
-        "latitude": 38.9807,
-        "longitude": -94.8082,
-        "daily": [
-            "temperature_2m_max",
-            "temperature_2m_min",
-            "apparent_temperature_max",
-            "apparent_temperature_min",
-            "precipitation_sum",
-            "weathercode"
-        ],
-        "temperature_unit": "fahrenheit",
-        "precipitation_unit": "inch",
-        "timezone": "America/Chicago",
-        "start_date": start_date.isoformat(),
-        "end_date": end_date.isoformat()
-    }
+    all_data = []
 
-    response = requests.get("https://api.open-meteo.com/v1/forecast", params=params)
-    logging.info(f"Weather API response code: {response.status_code}")
-    data = response.json()
+    for single_date in pd.date_range(start=start_date, end=end_date):
+        date_str = single_date.strftime("%Y-%m-%d")
+        url = f"http://api.weatherapi.com/v1/history.json?key={api_key}&q={location}&dt={date_str}"
+        response = requests.get(url)
+        logging.info(f"{date_str} - Status: {response.status_code}")
+        if response.status_code != 200:
+            logging.warning(f"Skipping {date_str} due to bad response.")
+            continue
 
-    # Convert to DataFrame
-    df = pd.DataFrame({
-        "date": data["daily"]["time"],
-        "temp_max": data["daily"]["temperature_2m_max"],
-        "temp_min": data["daily"]["temperature_2m_min"],
-        "feels_like_max": data["daily"]["apparent_temperature_max"],
-        "feels_like_min": data["daily"]["apparent_temperature_min"],
-        "precipitation_in": data["daily"]["precipitation_sum"],
-        "weather_code": data["daily"]["weathercode"]
-    })
+        json_data = response.json()
+        try:
+            day = json_data["forecast"]["forecastday"][0]["day"]
+            all_data.append({
+                "date": single_date.date(),
+                "temp_max": day["maxtemp_f"],
+                "temp_min": day["mintemp_f"],
+                "temp_avg": day["avgtemp_f"],
+                "precipitation_in": day["totalprecip_in"],
+                "weather_code": None,
+                "weather_description": day["condition"]["text"]
+            })
+        except (KeyError, IndexError) as e:
+            logging.warning(f"Skipping {date_str} due to parsing error: {e}")
+            continue
 
-    # Add weather descriptions
-    df["weather_description"] = df["weather_code"].map(weather_descriptions)
-    df = df.dropna()
-    df["date"] = pd.to_datetime(df["date"]).dt.date
+    df = pd.DataFrame(all_data)
+    logging.info(f"Number of rows to insert: {len(df)}")
+    if df.empty:
+        raise ValueError("No weather data to insert. DataFrame is empty.")
 
-    # Database connection
+    # DB connection
     db_user = os.getenv("DB_USER", "postgres")
     db_password = os.getenv("DB_PASSWORD", "Nicksucks1")
     db_host = os.getenv("DB_HOST", "host.docker.internal")
@@ -92,10 +78,11 @@ try:
     with engine.begin() as conn:
         for _, row in df.iterrows():
             stmt = insert(weather_table).values(**row.to_dict()).on_conflict_do_nothing(index_elements=["date"])
-            conn.execute(stmt)
+            result = conn.execute(stmt)
+            #logging.info(f"Inserted row for {row['date']}: {result.rowcount} rows affected")
 
-    logging.info("✅ Weather data loaded successfully.")
+    logging.info("✅ Weather data loaded successfully from WeatherAPI.")
 
 except Exception as e:
-    logging.error(f"❌ Weather ETL failed: {e}")
+    logging.error(f"❌ WeatherAPI ETL failed: {e}")
     sys.exit(1)
