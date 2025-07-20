@@ -74,11 +74,11 @@ try:
     df["date"] = pd.to_datetime(df["date"]).dt.date
 
     # Database connection
-    db_user = os.getenv("DB_USER", "postgres")
-    db_password = os.getenv("DB_PASSWORD", "Nicksucks1")
-    db_host = os.getenv("DB_HOST", "host.docker.internal")
-    db_port = os.getenv("DB_PORT", "5433")
-    db_name = os.getenv("DB_NAME", "microfarm")
+    db_user = os.getenv("DB_USER")
+    db_password = os.getenv("DB_PASSWORD")
+    db_host = os.getenv("DB_HOST")
+    db_port = os.getenv("DB_PORT")
+    db_name = os.getenv("DB_NAME")
 
     engine = create_engine(
         f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
@@ -97,5 +97,5 @@ try:
     logging.info("✅ Weather data loaded successfully.")
 
 except Exception as e:
-    logging.error(f"❌ Weather ETL failed: {e}")
+    logging.error(f"Weather ETL failed: {e}")
     sys.exit(1)
